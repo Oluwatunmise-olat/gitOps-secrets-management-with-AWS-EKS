@@ -1,0 +1,15 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gitOps-app-deployment
+spec:
+  selector:
+    matchLabels:
+      app: gitOps-app
+  template:
+    spec:
+      containers:
+      - name: core
+        envFrom:
+        - secretRef:
+            name: gitOps-app-secret

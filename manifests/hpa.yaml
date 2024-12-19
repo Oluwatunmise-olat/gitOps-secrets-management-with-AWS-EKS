@@ -1,0 +1,4 @@
+apiService: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: gitOps-app-hpa

@@ -1,0 +1,17 @@
+apiService: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: gitOps-app-ingress
+spec:
+  rules:
+    host: ""
+    http:
+      paths:
+        - backend:
+            service:
+              name: gitOps-app-svc
+              port:
+                number: 
+          path: /
+          pathType: Prefix
+

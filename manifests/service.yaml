@@ -1,0 +1,6 @@
+apiService: v1
+kind: Service
+metadata:
+  name: gitOps-app-svc
+spec:
+  
