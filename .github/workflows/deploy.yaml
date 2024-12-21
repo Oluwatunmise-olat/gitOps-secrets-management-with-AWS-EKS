@@ -66,7 +66,7 @@ jobs:
         run: kubectl config get-contexts
 
       - name: Apply Kubernetes Manifests
-        run: kubectl apply -k manifests
+        run: kubectl apply -k manifests --validate=false
 
 
         
