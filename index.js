@@ -12,7 +12,7 @@ server.get("/", (req, res) => {
 });
 
 server.get("/health", (req, res) => {
-  res.status(200).send({ status: "Healthy", timestamp: new Date() });
+  res.status(200).send({ status: "Application is Healthy", timestamp: new Date() });
 });
 
 // Endpoint to display secret (for testing updates)
