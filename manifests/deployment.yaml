@@ -8,19 +8,36 @@ spec:
     type: RollingUpdate
   selector:
     matchLabels:
-      app: gitOps-app
+      app: gitops-app
   template:
     metadata:
+      labels:
+        app: gitops-app
       annotations:
         checksum: "1"
     spec:
+      serviceAccountName: gitops-app-sa
+      volumes:
+        - name: secrets-store
+          csi: 
+            driver: secrets-store.csi.k8s.io
+            readOnly: true
+            volumeAttributes:
+              secretProviderClass: aws-secrets-manager
       containers:
         - name: core
           imagePullPolicy: Always
           image: "oluwatunmiseolat/gitops-eks:latest"
+          volumeMounts:
+            - name: secrets-store
+              mountPath: "/mnt/secrets"
+              readOnly: true
           envFrom:
             - secretRef:
                 name: "gitops-app-secret"
+          env:
+            - name: PORT
+              value: "3400"
           ports:
             - name: http
               containerPort: 3400

@@ -8,9 +8,10 @@ resources:
   - ingress.yaml
   - hpa.yaml
   - secret-provider-class.yaml
+  - service-account.yaml
 
 commonLabels:
-  app: gitOps-app
+  app: gitops-app
   environment: production
 
 images:
