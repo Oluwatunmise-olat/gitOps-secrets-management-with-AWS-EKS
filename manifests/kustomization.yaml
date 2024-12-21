@@ -8,7 +8,7 @@ resources:
   - ingress.yaml
   - hpa.yaml
   - secret-provider-class.yaml
-  - service-account.yaml
+  # - service-account.yaml # Excluded because role arn in annotation is redacted
 
 commonLabels:
   app: gitops-app

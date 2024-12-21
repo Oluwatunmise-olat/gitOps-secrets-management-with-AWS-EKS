@@ -1,0 +1,57 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Get Short Commit Hash For New Image Tag
+        id: vars
+        run: echo "GIT_COMMIT=$(git rev-parse --short=7 HEAD)" >> $GITHUB_ENV
+
+      - name: Login to Docker Hub
+        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+      - name: Set up Docker Buildx For Multi-Platform Build
+        uses: docker/setup-buildx-action@v2
+
+      - name: Build and Push Multi-Platform Docker Image
+        run: |
+          IMAGE_NAME=oluwatunmiseolat/gitops-eks
+          docker buildx build --platform linux/amd64,linux/arm64 \
+            -t $IMAGE_NAME:${{ env.GIT_COMMIT }} \
+            -t $IMAGE_NAME:latest \
+            --push .
+          echo "IMAGE_TAG=${{ env.GIT_COMMIT }}" >> $GITHUB_ENV
+
+      - name: Update Kustomization Yaml Image Tag
+        run: |
+          sed -i "s/newTag: .*/newTag: \"${{ env.IMAGE_TAG }}\"/" manifests/kustomization.yaml
+
+      - name: Commit and Push Updated Kustomization File
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add manifests/kustomization.yaml
+          git commit -m "Update image tag to ${{ env.IMAGE_TAG }}"
+          git push origin main
+
+      - name: Configure AWS CLI
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: eu-central-1
+
+      - name: Apply Kubernetes Manifests using Kubectl
+        uses: bitnami-labs/kubectl-action@v1.4.0
+        with:
+          kubectl-command: apply
+          kubectl-arguments: -k manifests
