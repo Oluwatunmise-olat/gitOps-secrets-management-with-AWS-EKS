@@ -16,7 +16,7 @@ commonLabels:
 
 images:
   - name: "oluwatunmiseolat/gitops-eks"
-    newTag: "b7412da"
+    newTag: "8b25ad5"
 
 # Added this to force deployment retrigger 🙂
 # patches:
