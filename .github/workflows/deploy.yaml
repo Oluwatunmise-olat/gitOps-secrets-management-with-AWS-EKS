@@ -51,9 +51,13 @@ jobs:
         with:
           role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/${{ secrets.AWS_OIDC_ROLE_NAME }}
           aws-region: ${{ secrets.AWS_REGION }}
+          audience: sts.amazonaws.com
 
       - name: Update kube Config
         run: aws eks update-kubeconfig --name ${{ secrets.EKS_CLUSTER_NAME }} --region eu-central-1
 
       - name: Apply Kubernetes Manifests
         run: kubectl apply -k manifests
+
+
+        
