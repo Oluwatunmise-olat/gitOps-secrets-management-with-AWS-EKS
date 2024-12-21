@@ -62,11 +62,8 @@ jobs:
       - name: Update kube Config
         run: aws eks update-kubeconfig --name ${{ secrets.EKS_CLUSTER_NAME }} --region eu-central-1
 
-      - name: Debug
-        run: kubectl get nodes
-
       - name: Apply Kubernetes Manifests
-        run: kubectl apply -k manifests --validate=false
+        run: kubectl apply -k manifests
 
 
         
