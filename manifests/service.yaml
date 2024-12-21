@@ -3,4 +3,10 @@ kind: Service
 metadata:
   name: gitOps-app-svc
 spec:
-  
+  selector:
+    app: gitOps-app
+  type: LoadBalancer
+  ports:
+    - port: 80
+      target: 3400
+      protocol: TCP

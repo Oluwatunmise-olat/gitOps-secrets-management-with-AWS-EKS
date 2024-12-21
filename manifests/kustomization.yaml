@@ -13,15 +13,15 @@ commonLabels:
   environment: production
 
 images:
-  - name: ""
+  - name: "oluwatunmiseolat/gitops-eks"
     newTag: latest
 
 # Added this to force deployment retrigger 🙂
-patches:
-  - target:
-      kind: Deployment
-      name: "" 
-    patch: |-
-      - op: add
-        path: /spec/template/metadata/annotations/checksum
-        value: ""
+# patches:
+#   - target:
+#       kind: Deployment
+#       name: "gitOps-app-deployment" 
+#     patch: |-
+#       - op: add
+#         path: /spec/template/metadata/annotations/checksum
+#         value: ""

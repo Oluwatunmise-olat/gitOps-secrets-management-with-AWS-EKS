@@ -3,13 +3,30 @@ kind: Deployment
 metadata:
   name: gitOps-app-deployment
 spec:
+  revisionHistoryLimit: 2
+  strategy:
+    type: RollingUpdate
   selector:
     matchLabels:
       app: gitOps-app
   template:
+    metadata:
+      checksum: 1
     spec:
       containers:
-      - name: core
-        envFrom:
-        - secretRef:
-            name: gitOps-app-secret
+        - name: core
+          imagePullPolicy: Always
+          image: "oluwatunmiseolat/gitops-eks:latest"
+          envFrom:
+            - secretRef:
+                name: "gitOps-app-secret"
+          ports:
+            - name: http
+              containerPort: 3400
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 3400
+            initialDelaySeconds: 30
+            periodSeconds: 10
