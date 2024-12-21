@@ -10,7 +10,7 @@ resources:
   - secret-provider-class.yaml
   # - service-account.yaml # Excluded because role arn in annotation is redacted
 
-labels:
+commonLabels:
   app: gitops-app
   environment: production
 

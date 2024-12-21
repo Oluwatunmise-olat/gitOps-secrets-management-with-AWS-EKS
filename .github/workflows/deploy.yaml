@@ -60,7 +60,7 @@ jobs:
           audience: sts.amazonaws.com
 
       - name: Debug kubectl
-        run: echo kubectl version
+        run: kubectl version
 
       - name: Update kube Config
         run: aws eks update-kubeconfig --name ${{ secrets.EKS_CLUSTER_NAME }} --region eu-central-1
