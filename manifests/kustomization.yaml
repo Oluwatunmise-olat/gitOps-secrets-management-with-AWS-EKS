@@ -10,20 +10,10 @@ resources:
   - secret-provider-class.yaml
   # - service-account.yaml # Excluded because role arn in annotation is redacted
 
-commonLabels:
+labels:
   app: gitops-app
   environment: production
 
 images:
   - name: "oluwatunmiseolat/gitops-eks"
-    newTag: "8b25ad5"
-
-# Added this to force deployment retrigger 🙂
-# patches:
-#   - target:
-#       kind: Deployment
-#       name: "gitOps-app-deployment" 
-#     patch: |-
-#       - op: add
-#         path: /spec/template/metadata/annotations/checksum
-#         value: ""
+    newTag: "b7412da"
