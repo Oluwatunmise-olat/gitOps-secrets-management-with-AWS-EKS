@@ -27,7 +27,7 @@ jobs:
           password: ${{ secrets.DOCKER_TOKEN }}
 
       - name: Set up Docker Buildx For Multi-Platform Build
-        uses: docker/setup-buildx-action@v4
+        uses: docker/setup-buildx-action@v2
 
       - name: Build and Push Multi-Platform Docker Image
         run: |
@@ -51,12 +51,11 @@ jobs:
           git push origin main
 
       - name: Configure AWS CLI
-        uses: aws-actions/configure-aws-credentials@v2
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/${{ secrets.AWS_OIDC_ROLE_NAME }}
           aws-region: ${{ secrets.AWS_REGION }}
           audience: sts.amazonaws.com
-          role-session-name: GitHubActions
 
       - name: Update kube Config
         run: aws eks update-kubeconfig --name ${{ secrets.EKS_CLUSTER_NAME }} --region eu-central-1
