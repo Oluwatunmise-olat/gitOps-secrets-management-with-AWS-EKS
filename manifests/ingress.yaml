@@ -1,20 +1,20 @@
-apiService: networking.k8s.io/v1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: gitOps-app-ingress
+  name: gitops-app-ingress
   annotations:
-    kubernetes.io/ingress.class: "alb"
     alb.ingress.kubernetes.io/scheme: "internet-facing"
     alb.ingress.kubernetes.io/target-type: "ip"
     alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}]'
 spec:
+  ingressClassName: "alb"
   rules:
     - host: "gitops.wave-deploy.xyz"
       http:
         paths:
           - backend:
               service:
-                name: gitOps-app-svc
+                name: gitops-app-svc
                 port:
                   number: 80
             path: /

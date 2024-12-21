@@ -1,14 +1,14 @@
-apiService: autoscaling/v2
+apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: gitOps-app-hpa
+  name: gitops-app-hpa
 spec:
   minReplicas: 2
   maxReplicas: 4
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: gitOps-app-deployment
+    name: gitops-app-deployment
   metrics:
     - type: Resource
       resource:

@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: gitOps-app-deployment
+  name: gitops-app-deployment
 spec:
   revisionHistoryLimit: 2
   strategy:
@@ -11,7 +11,8 @@ spec:
       app: gitOps-app
   template:
     metadata:
-      checksum: 1
+      annotations:
+        checksum: "1"
     spec:
       containers:
         - name: core
@@ -19,7 +20,7 @@ spec:
           image: "oluwatunmiseolat/gitops-eks:latest"
           envFrom:
             - secretRef:
-                name: "gitOps-app-secret"
+                name: "gitops-app-secret"
           ports:
             - name: http
               containerPort: 3400
