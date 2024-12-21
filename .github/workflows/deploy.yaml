@@ -46,10 +46,10 @@ jobs:
         run: |
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
-          git fetch origin
-          git pull --rebase origin main
           git add manifests/kustomization.yaml
           git commit -m "chore: update image tag to ${{ env.GIT_COMMIT }}"
+          git fetch origin
+          git pull --rebase origin main
           git push origin main
 
       - name: Configure AWS CLI
