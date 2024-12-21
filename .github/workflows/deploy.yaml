@@ -50,8 +50,8 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: eu-central-1
 
-      - name: Apply Kubernetes Manifests using Kubectl
-        uses: bitnami-labs/kubectl-action@v1.4.0
-        with:
-          kubectl-command: apply
-          kubectl-arguments: -k manifests
+      - name: Update kube Config
+        run: aws eks update-kubeconfig --name ${{ secrets.EKS_CLUSTER_NAME }} --region eu-central-1
+
+      - name: Apply Kubernetes Manifests
+        run: kubectl apply -k manifests
