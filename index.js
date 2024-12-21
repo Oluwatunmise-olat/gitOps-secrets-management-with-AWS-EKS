@@ -7,6 +7,10 @@ const PORT = process.env.PORT || 3000;
 
 server.use(express.json());
 
+server.get("/", (req, res) => {
+  res.status(200).send({ status: "Indecisive - Is It A Crime", artist: "Kidwild" });
+});
+
 server.get("/health", (req, res) => {
   res.status(200).send({ status: "Healthy", timestamp: new Date() });
 });

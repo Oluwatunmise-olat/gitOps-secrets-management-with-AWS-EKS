@@ -32,18 +32,18 @@ jobs:
             -t $IMAGE_NAME:${{ env.GIT_COMMIT }} \
             -t $IMAGE_NAME:latest \
             --push .
-          echo "IMAGE_TAG=${{ env.IMAGE_TAG }}" >> $GITHUB_ENV
+          echo "IMAGE_TAG=${{ env.GIT_COMMIT }}" >> $GITHUB_ENV
 
       - name: Update Kustomization Yaml Image Tag
         run: |
-          sed -i "s/newTag: .*/newTag: \"${{ env.IMAGE_TAG }}\"/" manifests/kustomization.yaml
+          sed -i "s/newTag: .*/newTag: \"${{ env.GIT_COMMIT }}\"/" manifests/kustomization.yaml
 
       - name: Commit and Push Updated Kustomization File
         run: |
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
           git add manifests/kustomization.yaml
-          git commit -m "Update image tag to ${{ env.IMAGE_TAG }}"
+          git commit -m "chore: update image tag to ${{ env.GIT_COMMIT }}"
           git push origin main
 
       - name: Configure AWS CLI
