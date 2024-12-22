@@ -17,4 +17,4 @@ commonLabels:
 
 images:
   - name: "oluwatunmiseolat/gitops-eks"
-    newTag: "6a7a665"
+    newTag: "6358aea"
