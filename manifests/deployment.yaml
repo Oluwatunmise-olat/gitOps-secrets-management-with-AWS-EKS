@@ -2,6 +2,8 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: gitops-app-deployment
+  annotations:
+    secrets-store.csi.k8s.io/rotation: "enabled"
 spec:
   revisionHistoryLimit: 2
   strategy:
@@ -34,7 +36,7 @@ spec:
               readOnly: true
           envFrom:
             - secretRef:
-                name: "gitops-app-secret"
+                name: "gitops-app-eso-secret"
           env:
             - name: PORT
               value: "3400"

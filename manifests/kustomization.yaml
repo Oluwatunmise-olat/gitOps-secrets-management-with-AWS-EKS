@@ -8,11 +8,12 @@ resources:
   - ingress.yaml
   - hpa.yaml
   - secret-provider-class.yaml
+  - external-secret.yaml
+  - secret-store.yaml
   # - service-account.yaml # Excluded because role arn in annotation is redacted
 
 commonLabels:
   app: gitops-app
-  environment: production
 
 images:
   - name: "oluwatunmiseolat/gitops-eks"
