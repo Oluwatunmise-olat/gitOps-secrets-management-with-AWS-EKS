@@ -5,12 +5,13 @@ kind: Kustomization
 resources:
   - deployment.yaml
   - service.yaml
-  - ingress.yaml
   - hpa.yaml
-  - secret-provider-class.yaml
   - external-secret.yaml
   - secret-store.yaml
-  # - service-account.yaml # Excluded because role arn in annotation is redacted
+  - secret-provider-class.yaml
+   # Excluded because role arn in annotation is redacted
+  # - ingress.yaml
+  # - service-account.yaml
 
 commonLabels:
   app: gitops-app
