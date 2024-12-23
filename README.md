@@ -1,72 +1,53 @@
-# AWS Secrets Manager Integration with EKS
+# Getting AWS Secrets Manager Working with EKS
 
-This guide explains how to set up AWS Secrets Manager integration with EKS using the Secrets Store CSI Driver.
+This guide shows how to get your AWS Secrets Manager secrets into Kubernetes using External Secrets Operator (ESO).
 
-## Table of Contents
-- [Prerequisites](#prerequisites)
-- [Installation Steps](#installation-steps)
-  - [1. Install Secrets Store CSI Driver](#1-install-secrets-store-csi-driver)
-  - [2. Install AWS Provider](#2-install-aws-provider)
-  - [3. Create OIDC Provider](#3-create-oidc-provider)
-  - [4. Set up IAM Role and Policies](#4-set-up-iam-role-and-policies)
-  - [5. Configure Kubernetes Resources](#5-configure-kubernetes-resources)
+## Before You Start
 
-## Prerequisites
+Make sure you have:
+- AWS CLI set up
+- Access to your EKS cluster with `kubectl`
+- `helm` (v3+)
 
-- AWS CLI configured with appropriate permissions
-- `kubectl` configured to interact with your EKS cluster
-- `helm` installed (v3.0+)
-- An existing EKS cluster
+## Setting Things Up
 
-## Installation Steps
+### 1. Get ESO Running
 
-### 1. Install Secrets Store CSI Driver
+First, install ESO using Helm:
 
 ```bash
-# Add the Secrets Store CSI driver Helm repository
-helm repo add secrets-store-csi-driver https://kubernetes-sigs.github.io/secrets-store-csi-driver/charts
+helm repo add external-secrets https://charts.external-secrets.io
 helm repo update
 
-# Install the Secrets Store CSI driver
-helm install csi-secrets-store secrets-store-csi-driver/secrets-store-csi-driver \
-    --namespace kube-system \
-    --set syncSecret.enabled=true \
-    --set enableSecretRotation=true \
-    --set rotationPollInterval=2m
+helm install external-secrets \
+    external-secrets/external-secrets \
+    --namespace external-secrets \
+    --create-namespace \
+    --set installCRDs=true
 ```
 
-### 2. Install AWS Provider
+### 2. OIDC Setup
+
+You need this for AWS IAM authentication. The easy way:
 
 ```bash
-# Install the AWS provider
-kubectl apply -f https://raw.githubusercontent.com/aws/secrets-store-csi-driver-provider-aws/main/deployment/aws-provider-installer.yaml
-```
-
-### 3. Create OIDC Provider
-
-```bash
-# Get your cluster's OIDC provider URL
-aws eks describe-cluster --name your-cluster-name --query "cluster.identity.oidc.issuer" --output text
-
-# Create the OIDC provider
 eksctl utils associate-iam-oidc-provider \
     --region your-region \
     --cluster your-cluster-name \
     --approve
 ```
 
-Alternatively, you can create it in the AWS Console:
-1. Go to IAM → Identity Providers → Add Provider
-2. Select OpenID Connect
-3. Enter your EKS cluster's OIDC endpoint URL
-4. For Audience, enter: sts.amazonaws.com
-5. Click "Add provider"
+If you prefer clicking around in AWS Console:
+1. Head to IAM → Identity Providers → Add Provider
+2. Pick OpenID Connect
+3. Grab your cluster's OIDC URL (you can find this in EKS cluster details)
+4. Put `sts.amazonaws.com` as the audience
+5. Add it
 
-### 4. Set up IAM Role and Policies
+### 3. IAM Setup
 
-#### Create Secrets Manager Access Policy
-
-Create a policy (e.g., `eks-secrets-manager-gitops-access`) with the following permissions:
+#### Policy First
+Create a policy that lets you read secrets. Something like:
 
 ```json
 {
@@ -86,9 +67,9 @@ Create a policy (e.g., `eks-secrets-manager-gitops-access`) with the following p
 }
 ```
 
-#### Create IAM Role
+#### Then the Role
 
-Create a role (e.g., `eks-gitops-app-role`) with the following trust relationship:
+Create a role with this trust relationship (replace the obvious placeholder bits):
 
 ```json
 {
@@ -111,12 +92,9 @@ Create a role (e.g., `eks-gitops-app-role`) with the following trust relationshi
 }
 ```
 
-Attach the Secrets Manager access policy to this role.
+### 4. Kubernetes Bits
 
-### 5. Configure Kubernetes Resources
-
-#### Create Service Account
-
+A service account to use the IAM role:
 ```yaml
 apiVersion: v1
 kind: ServiceAccount
@@ -127,38 +105,49 @@ metadata:
     eks.amazonaws.com/role-arn: arn:aws:iam::ACCOUNT_ID:role/eks-gitops-app-role
 ```
 
-#### Create SecretProviderClass
-
+Tell ESO how to talk to AWS:
 ```yaml
-apiVersion: secrets-store.csi.x-k8s.io/v1
-kind: SecretProviderClass
+apiVersion: external-secrets.io/v1beta1
+kind: SecretStore
 metadata:
-  name: aws-secrets-manager
-  namespace: default
+  name: gitops-app-secrets-store
 spec:
-  provider: aws
-  parameters:
-    objects: |
-      - objectName: "GitOpsApp"
-        objectType: secretsmanager
-        jmesPath:
-          - path: NODE_ENV
-            objectAlias: NODE_ENV
-          - path: APP_NAME
-            objectAlias: APP_NAME
-    region: eu-central-1
-  secretObjects:
-  - data:
-    - key: NODE_ENV
-      objectName: NODE_ENV
-    - key: APP_NAME
-      objectName: APP_NAME
-    secretName: gitops-app-secret
-    type: Opaque
+  provider:
+    aws:
+      service: SecretsManager
+      region: eu-central-1
+      auth:
+        jwt:
+          serviceAccountRef:
+            name: gitops-app-sa
 ```
 
-#### Update Deployment
+Define which secrets you want to pull:
+```yaml
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: gitops-app-eso
+spec:
+  refreshInterval: 2m  # Update this based on how often you want secrets synced
+  secretStoreRef:
+    name: gitops-app-secrets-store
+    kind: SecretStore
+  target:
+    name: gitops-app-eso-secret
+    creationPolicy: Owner
+  data:
+    - secretKey: APP_NAME
+      remoteRef:
+        key: GitOpsApp
+        property: APP_NAME
+    - secretKey: NODE_ENV
+      remoteRef:
+        key: GitOpsApp
+        property: NODE_ENV
+```
 
+Finally, use it in your deployment:
 ```yaml
 apiVersion: apps/v1
 kind: Deployment
@@ -170,19 +159,34 @@ spec:
       serviceAccountName: gitops-app-sa
       containers:
       - name: app
-        volumeMounts:
-        - name: secrets-store
-          mountPath: "/mnt/secrets"
-          readOnly: true
         envFrom:
         - secretRef:
-            name: gitops-app-secret
-      volumes:
-      - name: secrets-store
-        csi:
-          driver: secrets-store.csi.k8s.io
-          readOnly: true
-          volumeAttributes:
-            secretProviderClass: aws-secrets-manager
+            name: gitops-app-eso-secret
 ```
+
+## Why This Is Cool
+
+ESO (EKS-Optimized Storage) automatically syncs your AWS secrets (or any other secrets store, such as HashiCorp Vault) into Kubernetes secrets. Once it's set up, it's largely hands-off: simply update your secret in AWS Secrets Manager (or your chosen secrets store), and ESO will fetch the new version within the configured refresh interval.
+
+Since ESO creates regular Kubernetes secrets, you don't need to change how your applications interact with them. They will continue to read secrets as they always have.
+
+---
+
+## Important Note About Secret Updates ⚠️
+
+❗️ **When ESO syncs new secret values, existing pods will not automatically pick up the changes.** To apply the updated secrets, you'll need to trigger a deployment rollout.
+
+You can do this by running the following command:
+
+```bash
+kubectl rollout restart deployment <DEPLOYMENT_NAME>
+```
+
+Alternatively, if you're using Lens or another Kubernetes dashboard, you can trigger the rollout directly from the UI by clicking the "Restart" button on your deployment.
+
+---
+
+### Why This Happens
+
+Kubernetes only reads secret values when mounting them during pod creation. To apply new secret values, the affected pods must be recreated, hence the need to trigger a deployment rollout.
 
