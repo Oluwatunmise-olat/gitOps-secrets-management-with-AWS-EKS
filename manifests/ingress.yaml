@@ -30,3 +30,8 @@ spec:
                 name: gitops-app-svc
                 port:
                   number: 80
+  defaultBackend:
+      service:
+        name: gitops-app-svc
+        port:
+          number: 80
